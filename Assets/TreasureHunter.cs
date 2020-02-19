@@ -11,15 +11,13 @@ public class TreasureHunter : MonoBehaviour
 
     public TextMesh debugText;
 
-    public Material testmaterial;
-
     public LayerMask mask;
 
     public int score = 0;
     public int itemsCollected = 0;
 
     // private GameObject leftControllerCone;
-    private GameObject rightControllerCone;
+    private GameObject rightControllerPointer;
     private GameObject collectibleArea;
 
     private GameObject itemHeld;
@@ -30,8 +28,7 @@ public class TreasureHunter : MonoBehaviour
     void Start()
     {
         //references to pointer cones, for easy access
-        // leftControllerCone = GameObject.Find("LeftControllerAnchor").transform.Find("Cone").gameObject;
-        rightControllerCone = GameObject.Find("RightControllerAnchor").transform.Find("Cone").gameObject;
+        rightControllerPointer = GameObject.Find("RightControllerAnchor").transform.Find("Pointer").gameObject;
         collectibleArea = GameObject.Find("CollectibleArea");
     }
 
@@ -39,12 +36,12 @@ public class TreasureHunter : MonoBehaviour
     void Update()
     {
 
-        // if(itemHeldIsCollectible) {
-        //     debugText.text = "Collectible!";
-        // }
-        // else {
-        //     debugText.text = "Not collectible";
-        // }
+        if(itemHeldIsCollectible) {
+            debugText.text = "Collectible!";
+        }
+        else {
+            debugText.text = "Not collectible";
+        }
 
         // if the user presses the right trigger, attempt to grab object controller is pointing to
         if (OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger))
@@ -77,12 +74,11 @@ public class TreasureHunter : MonoBehaviour
     {
         RaycastHit hit; // holds object the ray hits if any
 
-        Debug.DrawRay(rightControllerCone.transform.position, rightControllerCone.transform.up, Color.green, 200, false);
+        Debug.DrawRay(rightControllerPointer.transform.position, rightControllerPointer.transform.up, Color.green, 200, false);
         // if the ray hits anything
-        if (Physics.Raycast(rightControllerCone.transform.position, rightControllerCone.transform.up, out hit, 100.0f, mask))
+        if (Physics.Raycast(rightControllerPointer.transform.position, rightControllerPointer.transform.up, out hit, 100.0f, mask))
         {
-            debugText.text = hit.collider.gameObject.name;
-            Debug.DrawRay(rightControllerCone.transform.position, rightControllerCone.transform.up, Color.red, 200, false);
+            Debug.DrawRay(rightControllerPointer.transform.position, rightControllerPointer.transform.up, Color.red, 200, false);
             GameObject objectHit = hit.transform.gameObject;
             attachGameObjectToAChildGameObject(objectHit, GameObject.Find("RightControllerAnchor"), AttachmentRule.SnapToTarget, AttachmentRule.SnapToTarget, AttachmentRule.KeepWorld, true);
             itemHeld = objectHit;
