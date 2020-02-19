@@ -11,10 +11,14 @@ public class TreasureHunter : MonoBehaviour
 
     public TextMesh debugText;
 
+    public Material testmaterial;
+
+    public LayerMask mask;
+
     public int score = 0;
     public int itemsCollected = 0;
 
-    private GameObject leftControllerCone;
+    // private GameObject leftControllerCone;
     private GameObject rightControllerCone;
     private GameObject collectibleArea;
 
@@ -26,7 +30,7 @@ public class TreasureHunter : MonoBehaviour
     void Start()
     {
         //references to pointer cones, for easy access
-        leftControllerCone = GameObject.Find("LeftControllerAnchor").transform.Find("Cone").gameObject;
+        // leftControllerCone = GameObject.Find("LeftControllerAnchor").transform.Find("Cone").gameObject;
         rightControllerCone = GameObject.Find("RightControllerAnchor").transform.Find("Cone").gameObject;
         collectibleArea = GameObject.Find("CollectibleArea");
     }
@@ -35,16 +39,17 @@ public class TreasureHunter : MonoBehaviour
     void Update()
     {
 
-        if(itemHeldIsCollectible) {
-            debugText.text = "Collectible!";
-        }
-        else {
-            debugText.text = "Not collectible";
-        }
+        // if(itemHeldIsCollectible) {
+        //     debugText.text = "Collectible!";
+        // }
+        // else {
+        //     debugText.text = "Not collectible";
+        // }
 
         // if the user presses the right trigger, attempt to grab object controller is pointing to
         if (OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger))
         {
+            print("Pressed trigger");
             if (itemHeld == null)
             {
                 GrabNearestCollectible();
@@ -72,20 +77,15 @@ public class TreasureHunter : MonoBehaviour
     {
         RaycastHit hit; // holds object the ray hits if any
 
+        Debug.DrawRay(rightControllerCone.transform.position, rightControllerCone.transform.up, Color.green, 200, false);
         // if the ray hits anything
-        if (Physics.Raycast(rightControllerCone.transform.position, rightControllerCone.transform.up, out hit, 100))
+        if (Physics.Raycast(rightControllerCone.transform.position, rightControllerCone.transform.up, out hit, 100.0f, mask))
         {
-            // and it's a collectible
-            if (hit.transform.tag == "Collectible")
-            {
-                GameObject objectHit = hit.transform.gameObject;
-                attachGameObjectToAChildGameObject(objectHit, GameObject.Find("RightControllerAnchor"), AttachmentRule.SnapToTarget, AttachmentRule.SnapToTarget, AttachmentRule.KeepWorld, true);
-                itemHeld = objectHit;
-            }
-            else
-            {
-                Debug.Log("Cannot grab: not a collectible");
-            }
+            debugText.text = hit.collider.gameObject.name;
+            Debug.DrawRay(rightControllerCone.transform.position, rightControllerCone.transform.up, Color.red, 200, false);
+            GameObject objectHit = hit.transform.gameObject;
+            attachGameObjectToAChildGameObject(objectHit, GameObject.Find("RightControllerAnchor"), AttachmentRule.SnapToTarget, AttachmentRule.SnapToTarget, AttachmentRule.KeepWorld, true);
+            itemHeld = objectHit;
         }
     }
 
@@ -129,7 +129,11 @@ public class TreasureHunter : MonoBehaviour
         inventoryObj.values = new int[inventory.Values.Count];
         inventory.Values.CopyTo(inventoryObj.values, 0);
 
-        scoreText.text = $"Score: {score}\nItems Collected: {itemsCollected}";
+        int woodpieces = inventory[(Collectible)AssetDatabase.LoadAssetAtPath("Assets/WoodPiece.prefab", typeof(Collectible))];
+        int bronze = inventory[(Collectible)AssetDatabase.LoadAssetAtPath("Assets/BronzeBar.prefab", typeof(Collectible))];
+        int silver = inventory[(Collectible)AssetDatabase.LoadAssetAtPath("Assets/SilverBar.prefab", typeof(Collectible))];
+        int gold = inventory[(Collectible)AssetDatabase.LoadAssetAtPath("Assets/GoldBar.prefab", typeof(Collectible))];
+        scoreText.text = $"Wood Pieces (10pts): {woodpieces}\nBronze Bars (25pts): {bronze}\nSilver Bars (50pts): {silver}\nGold Bars (100pts): {gold}\nScore: {score}\nTotal Collected: {itemsCollected}";
 
         // destroy item, clear held item
         Destroy(itemHeld);
