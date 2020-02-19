@@ -9,8 +9,6 @@ public class TreasureHunter : MonoBehaviour
 {
     public TextMesh scoreText;
 
-    public TextMesh debugText;
-
     public LayerMask mask;
 
     public int score = 0;
@@ -22,26 +20,25 @@ public class TreasureHunter : MonoBehaviour
 
     private GameObject itemHeld;
 
-    public static bool itemHeldIsCollectible = false;
-
     // Start is called before the first frame update
     void Start()
     {
         //references to pointer cones, for easy access
         rightControllerPointer = GameObject.Find("RightControllerAnchor").transform.Find("Pointer").gameObject;
         collectibleArea = GameObject.Find("CollectibleArea");
+
+        TreasureHunterInventory inventoryObj = GetComponent<TreasureHunterInventory>();
+        Dictionary<Collectible, int> inventory = inventoryObj.inventory;
+
+        inventory.Add((Collectible)AssetDatabase.LoadAssetAtPath("Assets/WoodPiece.prefab", typeof(Collectible)), 0);
+        inventory.Add((Collectible)AssetDatabase.LoadAssetAtPath("Assets/BronzeBar.prefab", typeof(Collectible)), 0);
+        inventory.Add((Collectible)AssetDatabase.LoadAssetAtPath("Assets/SilverBar.prefab", typeof(Collectible)), 0);
+        inventory.Add((Collectible)AssetDatabase.LoadAssetAtPath("Assets/GoldBar.prefab", typeof(Collectible)), 0);
     }
 
     // Update is called once per frame
     void Update()
     {
-
-        if(itemHeldIsCollectible) {
-            debugText.text = "Collectible!";
-        }
-        else {
-            debugText.text = "Not collectible";
-        }
 
         // if the user presses the right trigger, attempt to grab object controller is pointing to
         if (OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger))
@@ -58,7 +55,9 @@ public class TreasureHunter : MonoBehaviour
             // and you're actually holding something
             if (itemHeld != null)
             {
-                if (itemHeldIsCollectible)
+                Transform playerHeadPosition = GameObject.Find("CenterEyeAnchor").transform;
+                float heightFromHead = playerHeadPosition.position.y - itemHeld.transform.position.y;
+                if (heightFromHead >= 0.5f)
                 {
                     CollectHeldObject();
                 }
@@ -96,7 +95,6 @@ public class TreasureHunter : MonoBehaviour
             simulatePhysics(itemHeld, true);
             //you're not holding anything anymore
             itemHeld = null;
-            itemHeldIsCollectible = false;
         }
     }
 
