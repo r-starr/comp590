@@ -129,6 +129,13 @@ public class TreasureHunter : MonoBehaviour
         int gold = inventory[(Collectible)AssetDatabase.LoadAssetAtPath("Assets/GoldBar.prefab", typeof(Collectible))];
         scoreText.text = $"Wood Pieces (10pts): {woodpieces}\nBronze Bars (25pts): {bronze}\nSilver Bars (50pts): {silver}\nGold Bars (100pts): {gold}\nScore: {score}\nTotal Collected: {itemsCollected}";
 
+        // now that scores are updated, check to see if it's a trap!
+        TrapItem trapScript = itemHeld.GetComponent<TrapItem>();
+        if(trapScript != null) {
+            print("trap");
+            StartCoroutine(trapScript.SpringTrap());
+        }
+
         // destroy item, clear held item
         Destroy(itemHeld);
         itemHeld = null;
