@@ -9,9 +9,9 @@ public class TrapItem : MonoBehaviour
 
         Canvas jumpscare = GameObject.Find("jumpscare").GetComponent<Canvas>();
         print(jumpscare);
-        AudioSource scream = GetComponent<AudioSource>();
+        AudioSource laugh = GetComponent<AudioSource>();
         jumpscare.enabled = true;
-        scream.Play();
+        laugh.Play();
         yield return new WaitForSeconds(2);
         jumpscare.enabled = false;
     }
