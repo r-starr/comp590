@@ -9,10 +9,14 @@ public class TreasureHunter : MonoBehaviour
 {
     public TextMesh scoreText;
 
+    public TextMesh winText;
+
     public LayerMask mask;
 
     public int score = 0;
     public int itemsCollected = 0;
+
+    public bool gameIsOver = false;
 
     // private GameObject leftControllerCone;
     private GameObject rightControllerPointer;
@@ -20,13 +24,14 @@ public class TreasureHunter : MonoBehaviour
 
     private GameObject itemHeld;
 
+
     // Start is called before the first frame update
     void Start()
     {
-        //references to pointer cones, for easy access
+        //references to pointer cone, for easy access
         rightControllerPointer = GameObject.Find("RightControllerAnchor").transform.Find("Pointer").gameObject;
-        collectibleArea = GameObject.Find("CollectibleArea");
 
+        //inventory initialization
         TreasureHunterInventory inventoryObj = GetComponent<TreasureHunterInventory>();
         Dictionary<Collectible, int> inventory = inventoryObj.inventory;
 
@@ -40,30 +45,34 @@ public class TreasureHunter : MonoBehaviour
     void Update()
     {
 
-        // if the user presses the right trigger, attempt to grab object controller is pointing to
-        if (OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger))
+        // if the user hasn't won/lost yet
+        if (!gameIsOver)
         {
-            print("Pressed trigger");
-            if (itemHeld == null)
+            // if the user presses the right trigger, attempt to grab object controller is pointing to
+            if (OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger))
             {
-                GrabNearestCollectible();
-            }
-        }
-        // if you let go of the trigger
-        else if (OVRInput.GetUp(OVRInput.RawButton.RIndexTrigger))
-        {
-            // and you're actually holding something
-            if (itemHeld != null)
-            {
-                Transform playerHeadPosition = GameObject.Find("CenterEyeAnchor").transform;
-                float heightFromHead = playerHeadPosition.position.y - itemHeld.transform.position.y;
-                if (heightFromHead >= 0.5f)
+                print("Pressed trigger");
+                if (itemHeld == null)
                 {
-                    CollectHeldObject();
+                    GrabNearestCollectible();
                 }
-                else
+            }
+            // if you let go of the trigger
+            else if (OVRInput.GetUp(OVRInput.RawButton.RIndexTrigger))
+            {
+                // and you're actually holding something
+                if (itemHeld != null)
                 {
-                    LetGo();
+                    Transform playerHeadPosition = GameObject.Find("CenterEyeAnchor").transform;
+                    float heightFromHead = playerHeadPosition.position.y - itemHeld.transform.position.y;
+                    if (heightFromHead >= 0.5f)
+                    {
+                        CollectHeldObject();
+                    }
+                    else
+                    {
+                        LetGo();
+                    }
                 }
             }
         }
@@ -102,33 +111,57 @@ public class TreasureHunter : MonoBehaviour
     {
         // method assumes you've already checked to make sure it's in a collectible state
 
-        // grab the inventory
-        TreasureHunterInventory inventoryObj = GetComponent<TreasureHunterInventory>();
-        Dictionary<Collectible, int> inventory = inventoryObj.inventory;
+        // check to see if it's a trap, and if it is, end the game!
+        TrapItem trapScript = itemHeld.GetComponent<TrapItem>();
+        if (trapScript != null)
+        {
+            print("trap");
+            StartCoroutine(trapScript.SpringTrap());
+            winText.color = Color.red;
+            winText.text = "You lose!";
+            gameIsOver = true;
+        }
+        //if it's not a trap, do normal collection   
+        else
+        {
 
-        // what kind of collectible is it?
-        string collectibleType = itemHeld.GetComponent<Collectible>().type;
+            // grab the inventory
+            TreasureHunterInventory inventoryObj = GetComponent<TreasureHunterInventory>();
+            Dictionary<Collectible, int> inventory = inventoryObj.inventory;
 
-        // update score
-        itemsCollected++;
-        score += itemHeld.GetComponent<Collectible>().value;
+            // what kind of collectible is it?
+            string collectibleType = itemHeld.GetComponent<Collectible>().type;
 
-        // update inventory list and counts
-        Collectible prefab = (Collectible)AssetDatabase.LoadAssetAtPath($"Assets/{collectibleType}.prefab", typeof(Collectible));
-        int count = 0;
-        inventory.TryGetValue(prefab, out count);
-        inventory[prefab] = (count == 0) ? 1 : ++count;
-        inventoryObj.keys = new Collectible[inventory.Keys.Count];
-        inventory.Keys.CopyTo(inventoryObj.keys, 0);
-        inventoryObj.values = new int[inventory.Values.Count];
-        inventory.Values.CopyTo(inventoryObj.values, 0);
+            // update score
+            itemsCollected++;
+            score += itemHeld.GetComponent<Collectible>().value;
 
-        int woodpieces = inventory[(Collectible)AssetDatabase.LoadAssetAtPath("Assets/WoodPiece.prefab", typeof(Collectible))];
-        int bronze = inventory[(Collectible)AssetDatabase.LoadAssetAtPath("Assets/BronzeBar.prefab", typeof(Collectible))];
-        int silver = inventory[(Collectible)AssetDatabase.LoadAssetAtPath("Assets/SilverBar.prefab", typeof(Collectible))];
-        int gold = inventory[(Collectible)AssetDatabase.LoadAssetAtPath("Assets/GoldBar.prefab", typeof(Collectible))];
-        scoreText.text = $"Wood Pieces (10pts): {woodpieces}\nBronze Bars (25pts): {bronze}\nSilver Bars (50pts): {silver}\nGold Bars (100pts): {gold}\nScore: {score}\nTotal Collected: {itemsCollected}";
+            // update inventory list and counts
+            Collectible prefab = (Collectible)AssetDatabase.LoadAssetAtPath($"Assets/{collectibleType}.prefab", typeof(Collectible));
+            int count = 0;
+            inventory.TryGetValue(prefab, out count);
+            inventory[prefab] = (count == 0) ? 1 : ++count;
+            inventoryObj.keys = new Collectible[inventory.Keys.Count];
+            inventory.Keys.CopyTo(inventoryObj.keys, 0);
+            inventoryObj.values = new int[inventory.Values.Count];
+            inventory.Values.CopyTo(inventoryObj.values, 0);
 
+            int woodpieces = inventory[(Collectible)AssetDatabase.LoadAssetAtPath("Assets/WoodPiece.prefab", typeof(Collectible))];
+            int bronze = inventory[(Collectible)AssetDatabase.LoadAssetAtPath("Assets/BronzeBar.prefab", typeof(Collectible))];
+            int silver = inventory[(Collectible)AssetDatabase.LoadAssetAtPath("Assets/SilverBar.prefab", typeof(Collectible))];
+            int gold = inventory[(Collectible)AssetDatabase.LoadAssetAtPath("Assets/GoldBar.prefab", typeof(Collectible))];
+            scoreText.text = $"Wood Pieces (10pts): {woodpieces}\nBronze Bars (25pts): {bronze}\nSilver Bars (50pts): {silver}\nGold Bars (100pts): {gold}\nScore: {score}\nTotal Collected: {itemsCollected}";
+
+            // check win condition, end game if won
+            // shouldnt be able to get more than 5 items but just in case
+            if (itemsCollected >= 5)
+            {
+                winText.text = "You win!";
+                winText.color = Color.green;
+                gameIsOver = true;
+            }
+
+        }
         // destroy item, clear held item
         Destroy(itemHeld);
         itemHeld = null;
